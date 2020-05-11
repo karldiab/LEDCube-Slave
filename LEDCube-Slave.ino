@@ -123,42 +123,34 @@ Serial.println("All hail the cube");
 }//***end setup***end setup***end setup***end setup***end setup***end setup***end setup***end setup***end setup***end setup
 
 void loop(){//***start loop***start loop***start loop***start loop***start loop***start loop***start loop***start loop***start loop
-//  if (millis() - lastPrint > 1000) {
-//    Serial.print("Buffers have these many items in them: ");
-//    for (int i=0;i<3;i++) {
-//      Serial.print(frameBuffer[i].size());
-//      Serial.print(" ");
-//    }
-//    Serial.println();
-//    lastPrint = millis();
-//  }
-  while (!frameBuffer[0].isEmpty()) {
-    for (int i=0;i<3;i++) { 
-      LEDData[i] = frameBuffer[i].pop();
+  while (1) {
+    while (!frameBuffer[0].isEmpty()) {
+      for (int i=0;i<3;i++) { 
+        LEDData[i] = frameBuffer[i].pop();
+      }
+      //if this is a normal single LED color command
+      if(!(LEDData[1] & B00001110)) {
+        LEDNumber = ((LEDData[1] & B00000001) << 8) + LEDData[2];
+        LED(LEDNumber >> 6, 
+        ((LEDData[2] & B00111000) >> 3), 
+        LEDData[2] & B00000111, 
+        LEDData[0] >> 4, 
+        LEDData[0] & B00001111,
+        LEDData[1] >> 4);
+        //if not its a special command
+        //if XXX(the special command bits) is B001, its a whole cube color command
+      } else if((LEDData[1] & B00001110) == 2){
+        byte R = LEDData[0] >> 4, G = LEDData[0] & B00001111, B = LEDData[1] >> 4;
+        for (int i=0;i<=7;i++)
+          for (int j=0;j<=7;j++)
+            for (int k=0;k<=7;k++)
+              LED(i,j,k,R,G,B);
+      } else {
+        Serial.println("Got a weird command, I'm lost");
+      }
     }
-    //if this is a normal single LED color command
-    if(!(LEDData[1] & B00001110)) {
-      LEDNumber = ((LEDData[1] & B00000001) << 8) + LEDData[2];
-      LED(LEDNumber >> 6, 
-      ((LEDData[2] & B00111000) >> 3), 
-      LEDData[2] & B00000111, 
-      LEDData[0] >> 4, 
-      LEDData[0] & B00001111,
-      LEDData[1] >> 4);
-      //if not its a special command
-      //if XXX(the special command bits) is B001, its a whole cube color command
-    } else if((LEDData[1] & B00001110) == 2){
-      byte R = LEDData[0] >> 4, G = LEDData[0] & B00001111, B = LEDData[1] >> 4;
-      for (int i=0;i<=7;i++)
-        for (int j=0;j<=7;j++)
-          for (int k=0;k<=7;k++)
-            LED(i,j,k,R,G,B);
-    } else {
-      Serial.println("Got a weird command, I'm lost");
-      delay(5000);
-    }
-
   }
+
 
 
 }//***end loop***end loop***end loop***end loop***end loop***end loop***end loop***end loop***end loop***end loop***end loop***end loop
